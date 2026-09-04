@@ -1,4 +1,4 @@
-# Crispr Offtarget Scanner
+# CRISPR Off-Target Scanner
 
 > **Domain:** Computational Biology & AI Drug Discovery  
 > **Reference Guidelines & Standards:** `wwPDB, IUPAC & CLSI Computational Guidelines`
@@ -16,93 +16,169 @@
 
 ---
 
-## 📖 What It Does
+## Overview
 
-CRISPR Off-Target Scanner
-Cas9 off-target scan with mismatch/bulge scoring and CFD-like specificity.
-Stdlib parser / mapper with batch CSV and single lookup.
+CRISPR Off-Target Scanner is a Python-based tool for scanning and scoring potential off-target sites in CRISPR-Cas9 gene editing experiments. It provides:
 
----
-
-## ⚙️ Key Capabilities & Algorithmic Modules
-
-### 🔬 Analytical Functions
-
-- **`lookup()`**: Single lookup: token overlap + substring scoring (no deps). Returns top hits.
-- **`process_csv()`** — calculates and validates process_csv parameters.
-- **`build_parser()`** — calculates and validates build_parser parameters.
-- **`main()`** — calculates and validates main parameters.
+- **Lookup scoring**: Token overlap and substring scoring for guide RNA target identification
+- **CSV batch processing**: Process multiple queries from CSV files
+- **REST API**: FastAPI-based REST endpoints for integration with analysis pipelines
+- **Security**: Zero-PHI outbound guard and HMAC-SHA256 tamper-evident audit trail
 
 ---
 
-## 📐 Mathematical Formulation & Logic
+## Installation
 
-```text
-  score = 0
-```
-
----
-
-## 💻 CLI Quickstart & Usage
-
-### 1. Guided Interactive Mode
-```bash
-python cli.py
-```
-
-### 2. Direct Parameterized Evaluation
-```bash
-python cli.py --task-id <value> --target <value> --primary <value> --secondary <value>
-```
-
-### Parameter Reference
-- `--task-id`: Specifies input measurement or parameter value.
-- `--target`: Specifies input measurement or parameter value.
-- `--primary`: Specifies input measurement or parameter value.
-- `--secondary`: Specifies input measurement or parameter value.
-- `--critical`: Specifies input measurement or parameter value.
-- `--status`: Specifies input measurement or parameter value.
-- `--input`: Specifies input measurement or parameter value.
-- `--output`: Specifies input measurement or parameter value.
-
-### Input Data Schema
-
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `query` | Parameter / observation metric | Required |
-| `name` | Parameter / observation metric | Required |
-
----
-
-## 🛡️ Security & Enterprise Architecture
-
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
-
----
-
-## 🧪 Testing & Verification
-
-Run the automated test suite:
+### Local Installation
 
 ```bash
-pytest -v
+# Clone the repository
+git clone https://github.com/abusuraihsakhri/crispr-offtarget-scanner.git
+cd crispr-offtarget-scanner
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-Execute high-throughput batch simulation benchmarks:
+### Docker Deployment
 
 ```bash
-python simulator.py --tasks 1000 --concurrency 8
-```
+# Build and run with Docker Compose
+export AUDIT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
+docker-compose up --build
 
----
-
-## 🐳 Container Deployment
-
-```bash
+# Or build and run manually
 docker build -t crispr-offtarget-scanner .
-docker run -p 8000:8000 crispr-offtarget-scanner
+docker run -p 8000:8000 -e AUDIT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))") crispr-offtarget-scanner
 ```
+
+---
+
+## Usage
+
+### Command Line Interface
+
+#### Single Lookup
+```bash
+python cli.py audit --task-id TASK-001 --target KEY-01 --primary 28.5 --secondary 14.2
+```
+
+#### Batch CSV Processing
+```bash
+python cli.py batch -i input.csv -o results.csv
+```
+
+#### Chat Query
+```bash
+python cli.py chat "Explain CRISPR off-target effects"
+```
+
+#### Verify Audit Trail
+```bash
+python cli.py verify-audit
+```
+
+#### Start API Server
+```bash
+python cli.py serve --host 127.0.0.1 --port 8000
+```
+
+### Direct Module Usage
+
+```python
+from crispr_offtarget import lookup, process_csv
+
+# Single lookup
+result = lookup("cas9 guide rna")
+print(result["top_hit"], result["score"])
+
+# Batch processing
+results = process_csv("input.csv", "output.csv")
+```
+
+### REST API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/metrics` | GET | Prometheus metrics |
+| `/api/audit` | POST | Submit task for evaluation |
+| `/api/chat` | POST | Chat with supervisor |
+| `/api/audit/logs` | GET | Get audit trail |
+
+---
+
+## Security
+
+### Audit Secret Key
+
+The application requires an `AUDIT_SECRET_KEY` environment variable for HMAC-SHA256 audit trail signing. **Never hardcode secrets in production.**
+
+```bash
+# Generate a secure random key
+python -c "import secrets; print(secrets.token_hex(32))"
+
+# Set the environment variable
+export AUDIT_SECRET_KEY="your-generated-key"
+```
+
+### Zero-PHI Guard
+
+The system includes a PHI (Protected Health Information) outbound guard that detects and blocks:
+- Medical Record Numbers (MRN)
+- Social Security Numbers
+- Phone numbers
+- Email addresses
+- Patient names and dates of birth
+
+---
+
+## Testing
+
+```bash
+# Run all tests
+pytest -v
+
+# Run with coverage
+pytest -v --cov=.
+
+# Run simulation benchmark
+python simulator.py 1000
+```
+
+---
+
+## Project Structure
+
+```
+crispr-offtarget-scanner/
+├── agents/                 # Enterprise agent framework
+│   ├── __init__.py
+│   ├── api.py             # FastAPI REST server
+│   ├── base.py            # Security, PHI guard, audit trail
+│   ├── llm_factory.py     # LLM provider factory
+│   ├── models.py          # Pydantic data models
+│   ├── supervisor.py      # Task orchestrator
+│   └── workers.py         # Specialized evaluation workers
+├── tests/                  # Test suite
+│   ├── test_crispr_offtarget_scanner.py
+│   └── test_enrichment.py
+├── cli.py                  # Command line interface
+├── crispr_offtarget.py     # Core lookup and CSV processing
+├── enrichment.py           # Feature enrichment engines
+├── simulator.py            # High-throughput simulation
+├── requirements.txt        # Python dependencies
+├── Dockerfile             # Docker build configuration
+├── docker-compose.yml     # Docker Compose configuration
+└── openapi_spec.json      # OpenAPI specification
+```
+
+---
+
+## License
+
+This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.

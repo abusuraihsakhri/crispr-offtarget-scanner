@@ -3,10 +3,15 @@ Distributed Component High-Throughput Traffic & Stress Testing Simulator for Cri
 """
 import time
 import random
+import os
 import sys
 from agents.models import SystemTaskPayload
 from agents.supervisor import SystemSupervisor
 from agents.base import PHIGuard, SecurityException, AuditLogger
+
+# Ensure AUDIT_SECRET_KEY is set for simulator operations
+if not os.getenv("AUDIT_SECRET_KEY"):
+    os.environ["AUDIT_SECRET_KEY"] = "simulator-session-key-" + os.urandom(16).hex()
 
 def run_simulation(iterations: int = 100):
     print(f"Starting Distributed Component Simulation on Crispr Offtarget Scanner ({iterations} tasks)...")
